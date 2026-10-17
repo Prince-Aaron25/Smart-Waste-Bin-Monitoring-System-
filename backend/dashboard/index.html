@@ -1,0 +1,299 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+  <title>Smart Waste Bin | Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="/dashboard/style.css?v=resolve1"
+  >
+  <link rel="stylesheet" href="/dashboard/navigation.css?v=nav1">
+</head>
+
+<body>
+  <div class="shell">
+
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brandmark">♻</div>
+        <div>
+          <strong>SMARTBIN</strong>
+          <small>MONITORING SYSTEM</small>
+        </div>
+      </div>
+
+      <div class="nav">
+        <span class="active">▦ &nbsp; Overview</span>
+        <span>▤ &nbsp; Sensor history</span>
+        <span>♢ &nbsp; Alerts</span>
+      </div>
+
+      <div class="sidebottom">
+        ESP32 · FastAPI · SQLite<br>
+        <span>Local network dashboard</span>
+      </div>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <div class="eyebrow">
+            REAL-TIME MONITORING
+          </div>
+
+          <h1>Waste Bin Overview</h1>
+
+          <p class="sub">
+            Live telemetry and alerts from your smart waste bin.
+          </p>
+        </div>
+
+        <div class="header-actions">
+          <span
+            id="connection"
+            class="connection"
+          >● Connecting...</span>
+
+          <button
+            id="settings"
+            class="secondary"
+          >⚙ API access</button>
+        </div>
+      </header>
+
+      <div
+        id="notice"
+        class="notice"
+        role="status"
+        hidden
+      ></div>
+
+      <section class="metrics">
+
+        <article class="card hero">
+          <div class="card-head">
+            <span>BIN FILL LEVEL</span>
+            <span
+              id="fillTag"
+              class="tag"
+            >WAITING</span>
+          </div>
+
+          <div class="gauge-wrap">
+            <div
+              class="gauge"
+              id="gauge"
+            >
+              <div class="gauge-inner">
+                <b id="percentage">--%</b>
+                <small>FILLED</small>
+              </div>
+            </div>
+
+            <div class="gauge-detail">
+              <strong id="fillLabel">
+                Waiting for readings
+              </strong>
+              <span id="lastUpdated">
+                No readings yet
+              </span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card metric">
+          <div class="card-head">
+            <span>ULTRASONIC DISTANCE</span>
+            <span class="symbol">↕</span>
+          </div>
+
+          <div class="metric-number">
+            <b id="distance">--</b>
+            <span>cm</span>
+          </div>
+
+          <p>Cleaned sensor measurement</p>
+
+          <div class="mini-note">
+            Sensor · HC-SR04
+          </div>
+        </article>
+
+        <article class="card metric">
+          <div class="card-head">
+            <span>DEVICE STATUS</span>
+            <span class="symbol">◉</span>
+          </div>
+
+          <div class="metric-number statusline">
+            <b id="deviceStatus">--</b>
+          </div>
+
+          <p id="deviceName">Device #1</p>
+
+          <div
+            class="mini-note"
+            id="lastSeen"
+          >Last seen: --</div>
+        </article>
+
+        <article class="card metric">
+          <div class="card-head">
+            <span>FULL-BIN ALERTS</span>
+            <span class="symbol">⚑</span>
+          </div>
+
+          <div class="metric-number">
+            <b id="alertCount">--</b>
+            <span>open</span>
+          </div>
+
+          <p>Unresolved FULL_BIN alerts</p>
+
+          <div class="mini-note">
+            From SQLite database
+          </div>
+        </article>
+
+      </section>
+
+      <section class="lower">
+
+        <article class="card history">
+          <div class="section-title">
+            <div>
+              <h2>Fill Level History</h2>
+              <p>Most recent 40 readings</p>
+            </div>
+
+            <span class="small-chip">
+              AUTO REFRESH · 1 SEC
+            </span>
+          </div>
+
+          <div class="chart">
+            <div class="chart-labels">
+              <span>100%</span>
+              <span>75%</span>
+              <span>50%</span>
+              <span>25%</span>
+              <span>0%</span>
+            </div>
+
+            <canvas
+              id="historyChart"
+              aria-label="Fill percentage over time"
+              role="img"
+            ></canvas>
+          </div>
+
+          <div class="chart-footer">
+            <span>● Fill percentage</span>
+            <span id="sampleCount">
+              0 readings
+            </span>
+          </div>
+        </article>
+
+        <article class="card alerts">
+          <div class="section-title">
+            <div>
+              <h2>Recent Alerts</h2>
+              <p>Latest recorded notifications</p>
+            </div>
+
+            <span
+              id="alertsLabel"
+              class="small-chip"
+            >--</span>
+          </div>
+
+          <div
+            id="alertList"
+            class="alert-list"
+          >
+            <p class="empty">
+              No alerts loaded yet.
+            </p>
+          </div>
+        </article>
+
+      </section>
+
+      <footer>
+        <span>Smart     Waste Bin Monitoring System</span>
+        <span>
+          Device ID:
+          <strong id="footerDevice">1</strong>
+          · Data via FastAPI
+        </span>
+      </footer>
+
+    </main>
+  </div>
+
+  <dialog id="authDialog">
+    <form
+      id="authForm"
+      method="dialog"
+    >
+      <h2>Connect to your API</h2>
+
+      <p>
+        Enter the API key from
+        <code>backend/.env</code>.
+        It is used only to request data from your local FastAPI server.
+      </p>
+
+      <label for="keyInput">
+        X-API-Key
+      </label>
+
+      <input
+        id="keyInput"
+        type="password"
+        autocomplete="off"
+        placeholder="Paste API key"
+        required
+      >
+
+      <label for="deviceInput">
+        Device ID
+      </label>
+
+      <input
+        id="deviceInput"
+        type="number"
+        min="1"
+        value="1"
+        required
+      >
+
+      <div class="dialog-actions">
+        <button
+          type="button"
+          class="secondary"
+          id="cancel"
+        >Cancel</button>
+
+        <button type="submit">
+          Connect dashboard
+        </button>
+      </div>
+
+      <small>
+        The key is kept only in this open page's memory,
+        not stored in the browser.
+      </small>
+    </form>
+  </dialog>
+
+  <script src="/dashboard/app.js?v=resolve1"></script>
+  <script src="/dashboard/navigation.js?v=nav1"></script>
+</body>
+</html>
