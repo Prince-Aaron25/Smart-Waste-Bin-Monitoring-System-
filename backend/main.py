@@ -90,12 +90,23 @@ def save_reading(data: ReadingInput):
         # Basic cleaning: retain 2 decimal places
         clean = round(raw, 2)
 
-        # Transform distance into fill percentage
+        # Empty bin = 23 cm; full bin = 1 cm.
+        EMPTY_DISTANCE_CM = 23.57
+        FULL_DISTANCE_CM = 1.0
+
         percentage = round(
-            max(0, min(100, (height - clean) / height * 100)),
+            max(
+                0,
+                min(
+                    100,
+                    (EMPTY_DISTANCE_CM - clean)
+                    / (EMPTY_DISTANCE_CM - FULL_DISTANCE_CM)
+                    * 100
+                )
+            ),
             2
         )
-
+        
         if percentage >= 90:
             status = "full"
         elif percentage >= 50:
