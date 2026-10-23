@@ -91,7 +91,7 @@ def save_reading(data: ReadingInput):
         clean = round(raw, 2)
 
         # Empty bin = 23 cm; full bin = 1 cm.
-        EMPTY_DISTANCE_CM = 23.57
+        EMPTY_DISTANCE_CM = 23.00
         FULL_DISTANCE_CM = 1.0
 
         percentage = round(
