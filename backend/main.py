@@ -12,7 +12,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
-from database import get_connection, initialize_database
+from database import get_connection, initialize_database, log_system_event
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 API_KEY = os.getenv("SMART_BIN_API_KEY")
@@ -150,7 +150,29 @@ def save_reading(data: ReadingInput):
                 (data.device_id, reading_id)
             )
 
+            conn.execute(
+                """
+                INSERT INTO system_logs
+                (device_id, event_type, description)
+                VALUES (?, ?, ?)
+                """,
+                (
+                    data.device_id,
+                    "ALERT_CREATED",
+                    "Waste bin reached FULL status; alert created"
+                )
+            )
+
         conn.commit()
+
+    log_system_event(
+        event_type="SENSOR_READING",
+        description=(
+            f"Reading saved: {percentage}% full, "
+            f"status={status}, distance={clean} cm"
+        ),
+        device_id=data.device_id
+    )
 
     return {
         "reading_id": reading_id,
@@ -160,7 +182,6 @@ def save_reading(data: ReadingInput):
         "fill_percentage": percentage,
         "fill_status": status
     }
-
 
 @app.get("/api/readings/latest",
          dependencies=[Depends(authenticate)])
@@ -262,7 +283,22 @@ def resolve_alert(alert_id: int, device_id: int = Query(gt=0)):
                    WHERE alert_id = ? AND device_id = ? AND is_resolved = 0""",
                 (alert_id, device_id),
             )
+
+            conn.execute(
+                """
+                INSERT INTO system_logs
+                (device_id, event_type, description)
+                VALUES (?, ?, ?)
+                """,
+                (
+                    device_id,
+                    "ALERT_RESOLVED",
+                    f"Alert ID {alert_id} was resolved"
+                )
+            )
+
             conn.commit()
+            
         updated = conn.execute(
             "SELECT * FROM alerts WHERE alert_id = ? AND device_id = ?",
             (alert_id, device_id),

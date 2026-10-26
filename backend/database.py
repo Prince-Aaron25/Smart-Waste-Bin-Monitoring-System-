@@ -20,3 +20,15 @@ def initialize_database():
     # Idempotent for existing databases; never deletes data.
     with get_connection() as conn:
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+
+
+
+def log_system_event(event_type, description, device_id=None):
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO system_logs (device_id, event_type, description)
+            VALUES (?, ?, ?)
+            """,
+            (device_id, event_type, description)
+        )
