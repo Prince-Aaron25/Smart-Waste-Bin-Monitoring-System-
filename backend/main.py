@@ -46,12 +46,6 @@ class ReadingInput(BaseModel):
     raw_distance_cm: float = Field(ge=0, allow_inf_nan=False)
 
 
-class LidEventInput(BaseModel):
-    device_id: int = Field(gt=0)
-    hand_distance_cm: float = Field(ge=0, allow_inf_nan=False)
-    lid_state: str = Field(pattern="^(open|closed)$")
-
-
 def get_device(conn, device_id):
     device = conn.execute(
         "SELECT * FROM devices WHERE device_id = ?",
@@ -233,22 +227,6 @@ def reading_history(
     return [dict(row) for row in rows]
 
 
-@app.post("/api/lid-events",
-          dependencies=[Depends(authenticate)])
-def save_lid_event(data: LidEventInput):
-    with get_connection() as conn:
-        get_device(conn, data.device_id)
-        cursor = conn.execute(
-            """
-            INSERT INTO lid_events
-            (device_id, hand_distance_cm, lid_state)
-            VALUES (?, ?, ?)
-            """,
-            (data.device_id, data.hand_distance_cm, data.lid_state)
-        )
-        conn.commit()
-
-    return {"event_id": cursor.lastrowid, "saved": True}
 
 
 @app.get("/api/alerts", dependencies=[Depends(authenticate)])
